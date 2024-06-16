@@ -29,7 +29,7 @@ const MessageContainer = () => {
         </>
       )}
     </div>
-  );
+  ); 
 };
 export default MessageContainer;
 
