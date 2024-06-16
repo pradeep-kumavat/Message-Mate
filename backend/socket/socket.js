@@ -8,7 +8,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
 	cors: {
-		origin: ["https://message-mate-z7wy.onrender.com/"],
+		origin: ["https://message-mate-z7wy.onrender.com"],
 		methods: ["GET", "POST"],
 	},
 });
