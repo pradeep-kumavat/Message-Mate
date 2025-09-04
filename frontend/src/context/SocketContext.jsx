@@ -14,7 +14,7 @@ export const SocketContextProvider = ({ children }) => {
 	useEffect(() => {
 		if (authUser) {
 			// ✅ use http:// not https:// for localhost
-			const newSocket = io("http://localhost:5000", {
+			const newSocket = io(import.meta.env.VITE_BACKEND_URL, {
 				query: { userId: authUser._id },
 				transports: ["websocket"], // force WebSocket
 			});
