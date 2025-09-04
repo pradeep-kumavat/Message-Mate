@@ -13,7 +13,8 @@ const useGetMessages = () => {
 				const res = await fetch(`/api/messages/${selectedConversation._id}`);
 				const data = await res.json();
 				if (data.error) throw new Error(data.error);
-				setMessages(data);
+
+				setMessages(data); // fresh messages
 			} catch (error) {
 				toast.error(error.message);
 			} finally {
@@ -21,9 +22,13 @@ const useGetMessages = () => {
 			}
 		};
 
-		if (selectedConversation?._id) getMessages();
+		if (selectedConversation?._id) {
+			setMessages([]); // clear previous chat
+			getMessages();
+		}
 	}, [selectedConversation?._id, setMessages]);
 
 	return { messages, loading };
 };
+
 export default useGetMessages;

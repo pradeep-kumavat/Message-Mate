@@ -4,31 +4,32 @@ import io from "socket.io-client";
 
 const SocketContext = createContext();
 
-export const useSocketContext = () => {
-	return useContext(SocketContext); 
-};
+export const useSocketContext = () => useContext(SocketContext);
 
 export const SocketContextProvider = ({ children }) => {
 	const [socket, setSocket] = useState(null);
 	const [onlineUsers, setOnlineUsers] = useState([]);
 	const { authUser } = useAuthContext();
 
-	useEffect(() => { 
+	useEffect(() => {
 		if (authUser) {
-			const socket = io("https://localhost:5000", {
-				query: {
-					userId: authUser._id,
-				},
+			// ✅ use http:// not https:// for localhost
+			const newSocket = io("http://localhost:5000", {
+				query: { userId: authUser._id },
+				transports: ["websocket"], // force WebSocket
 			});
 
-			setSocket(socket);
+			setSocket(newSocket);
 
-			// socket.on() is used to listen to the events. can be used both on client and server side
-			socket.on("getOnlineUsers", (users) => {
+			newSocket.on("getOnlineUsers", (users) => {
 				setOnlineUsers(users);
 			});
 
-			return () => socket.close();
+			// ✅ cleanup properly
+			return () => {
+				newSocket.off("getOnlineUsers");
+				newSocket.close();
+			};
 		} else {
 			if (socket) {
 				socket.close();
@@ -37,5 +38,9 @@ export const SocketContextProvider = ({ children }) => {
 		}
 	}, [authUser]);
 
-	return <SocketContext.Provider value={{ socket, onlineUsers }}>{children}</SocketContext.Provider>;
+	return (
+		<SocketContext.Provider value={{ socket, onlineUsers }}>
+			{children}
+		</SocketContext.Provider>
+	);
 };

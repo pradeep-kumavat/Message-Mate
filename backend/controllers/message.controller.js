@@ -8,6 +8,7 @@ export const sendMessage = async (req, res) => {
 		const { id: receiverId } = req.params;
 		const senderId = req.user._id;
 
+		// find or create conversation
 		let conversation = await Conversation.findOne({
 			participants: { $all: [senderId, receiverId] },
 		});
@@ -18,32 +19,34 @@ export const sendMessage = async (req, res) => {
 			});
 		}
 
+		// create new message
 		const newMessage = new Message({
 			senderId,
 			receiverId,
 			message,
 		});
 
-		if (newMessage) {
-			conversation.messages.push(newMessage._id);
-		}
+		// add message to conversation
+		conversation.messages.push(newMessage._id);
 
-		// await conversation.save();
-		// await newMessage.save();
-
-		// this will run in parallel
+		// save both in parallel
 		await Promise.all([conversation.save(), newMessage.save()]);
 
-		// SOCKET IO FUNCTIONALITY WILL GO HERE
+		// SOCKET.IO: notify both sender & receiver
 		const receiverSocketId = getReceiverSocketId(receiverId);
+		const senderSocketId = getReceiverSocketId(senderId);
+
 		if (receiverSocketId) {
-			// io.to(<socket_id>).emit() used to send events to specific client
 			io.to(receiverSocketId).emit("newMessage", newMessage);
 		}
+		if (senderSocketId) {
+			io.to(senderSocketId).emit("newMessage", newMessage);
+		}
 
+		// send back response to sender's HTTP request
 		res.status(201).json(newMessage);
 	} catch (error) {
-		console.log("Error in sendMessage controller: ", error.message);
+		console.error("Error in sendMessage controller: ", error.message);
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
